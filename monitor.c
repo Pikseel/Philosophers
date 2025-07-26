@@ -6,7 +6,7 @@
 /*   By: mecavus <mecavus@student.42kocaeli.com.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 19:22:49 by mecavus           #+#    #+#             */
-/*   Updated: 2025/07/22 16:45:24 by mecavus          ###   ########.fr       */
+/*   Updated: 2025/07/26 16:20:17 by mecavus          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,13 @@ static int	check_eat_limit(t_philo_info *pi)
 
 	if (pi->eat_limit == -1)
 		return (0);
+	if (pi->eat_limit == 0)
+	{
+		pthread_mutex_lock(&pi->stop_mutex);
+		pi->stop = 1;
+		pthread_mutex_unlock(&pi->stop_mutex);
+		return (1);
+	}
 	finished_count = 0;
 	pthread_mutex_lock(&pi->check_mutex);
 	i = 0;
@@ -78,7 +85,6 @@ void	monitor(t_philo_info *pi)
 				return ;
 			i++;
 		}
-		usleep(1000);
 	}
 }
 
@@ -89,7 +95,7 @@ int	arg_check(char **av)
 	i = -1;
 	if (ft_atoi(av[0]) == 0)
 		return (-1);
-	if (av[4] && ft_atoi(av[4]) == 0)
+	if (av[4] && ft_atoi(av[4]) == -1)
 		return (-1);
 	while (av[++i])
 		if (ft_atoi(av[i]) == -1)

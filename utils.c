@@ -6,7 +6,7 @@
 /*   By: mecavus <mecavus@student.42kocaeli.com.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/22 00:20:00 by mecavus           #+#    #+#             */
-/*   Updated: 2025/07/22 16:57:56 by mecavus          ###   ########.fr       */
+/*   Updated: 2025/07/26 17:52:05 by mecavus          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,7 +58,7 @@ void	ms_sleep(t_philo *p, int time)
 			break ;
 		}
 		pthread_mutex_unlock(&p->pi->stop_mutex);
-		usleep(500);
+		usleep(200);
 	}
 }
 
