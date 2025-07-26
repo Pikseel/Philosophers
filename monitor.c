@@ -6,7 +6,7 @@
 /*   By: mecavus <mecavus@student.42kocaeli.com.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 19:22:49 by mecavus           #+#    #+#             */
-/*   Updated: 2025/07/26 16:20:17 by mecavus          ###   ########.fr       */
+/*   Updated: 2025/07/26 18:41:17 by mecavus          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -76,9 +76,11 @@ void	monitor(t_philo_info *pi)
 
 	while (1)
 	{
+		i = 0;
+		if (i % 2 == 0)
+			usleep(200);
 		if (check_eat_limit(pi))
 			return ;
-		i = 0;
 		while (i < pi->philo_size)
 		{
 			if (check_death(pi, i))

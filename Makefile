@@ -1,6 +1,6 @@
 CC = cc
 NAME = philo
-CFLAGS = -Wall -Wextra -Werror -fsanitize=thread -pthread
+CFLAGS = -Wall -Wextra -Werror -pthread
 SRCS = philo.c monitor.c philo_loop.c utils.c
 HEADERS = philo.h
 

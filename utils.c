@@ -6,7 +6,7 @@
 /*   By: mecavus <mecavus@student.42kocaeli.com.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/22 00:20:00 by mecavus           #+#    #+#             */
-/*   Updated: 2025/07/26 17:52:05 by mecavus          ###   ########.fr       */
+/*   Updated: 2025/07/26 18:49:05 by mecavus          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,8 +31,8 @@ void	print_status(t_philo *p, char *str)
 void	eat_status(t_philo *p)
 {
 	pthread_mutex_lock(&p->pi->check_mutex);
-	p->meals_eaten++;
 	p->last_eat_time = get_ms(p->pi);
+	p->meals_eaten++;
 	pthread_mutex_unlock(&p->pi->check_mutex);
 }
 
