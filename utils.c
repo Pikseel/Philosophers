@@ -6,7 +6,7 @@
 /*   By: mecavus <mecavus@student.42kocaeli.com.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/22 00:20:00 by mecavus           #+#    #+#             */
-/*   Updated: 2025/07/26 18:49:05 by mecavus          ###   ########.fr       */
+/*   Updated: 2025/07/27 14:59:54 by mecavus          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,14 +16,15 @@
 
 void	print_status(t_philo *p, char *str)
 {
+	pthread_mutex_lock(&p->pi->dead_mutex);
 	pthread_mutex_lock(&p->pi->stop_mutex);
 	if (p->pi->stop)
 	{
 		pthread_mutex_unlock(&p->pi->stop_mutex);
+		pthread_mutex_unlock(&p->pi->dead_mutex);
 		return ;
 	}
 	pthread_mutex_unlock(&p->pi->stop_mutex);
-	pthread_mutex_lock(&p->pi->dead_mutex);
 	printf("%lu %d %s\n", get_ms(p->pi), p->index + 1, str);
 	pthread_mutex_unlock(&p->pi->dead_mutex);
 }

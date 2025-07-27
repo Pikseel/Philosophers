@@ -6,7 +6,7 @@
 /*   By: mecavus <mecavus@student.42kocaeli.com.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 15:20:46 by mecavus           #+#    #+#             */
-/*   Updated: 2025/07/26 12:41:47 by mecavus          ###   ########.fr       */
+/*   Updated: 2025/07/27 15:20:14 by mecavus          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,21 +68,6 @@ static int	init_mutexes(t_philo_info *pi)
 	return (0);
 }
 
-void	destroy_mutexes(t_philo_info *pi, int thread_count)
-{
-	int	i;
-
-	i = -1;
-	while (++i < thread_count)
-		pthread_join(pi->philos[i].thread, NULL);
-	pthread_mutex_destroy(&pi->dead_mutex);
-	pthread_mutex_destroy(&pi->check_mutex);
-	pthread_mutex_destroy(&pi->stop_mutex);
-	i = -1;
-	while (++i < pi->philo_size)
-		pthread_mutex_destroy(&pi->forks[i]);
-}
-
 static int	init_thread(t_philo_info *pi)
 {
 	int	i;
@@ -97,9 +82,23 @@ static int	init_thread(t_philo_info *pi)
 		pi->philos[i].last_eat_time = get_ms(pi);
 		pi->philos[i].index = i;
 		pi->philos[i].meals_eaten = 0;
+	}
+	i = -1;
+	while (++i < pi->philo_size)
+	{
 		if (pthread_create(&pi->philos[i].thread, NULL, philo_loop,
 				&pi->philos[i]) != 0)
 			return (destroy_mutexes(pi, i), -1);
+	}
+	return (0);
+}
+
+static int	is_zero_time(t_philo_info *pi)
+{
+	if (pi->die_time == 0 || pi->eat_time == 0 || pi->sleep_time == 0)
+	{
+		printf("Error: Time values cant be zero.\n");
+		return (1);
 	}
 	return (0);
 }
@@ -110,14 +109,14 @@ int	main(int ac, char **av)
 
 	if ((ac != 5 && ac != 6) || arg_check(av + 1) == -1)
 	{
-		printf("Arg Error.\n");
+		printf("Error: Invalid argument.\n");
 		return (1);
 	}
 	pi = malloc(sizeof(t_philo_info));
 	if (!pi)
 		return (1);
 	init_arg(pi, av);
-	if (!pi->philos || !pi->forks)
+	if (!pi->philos || !pi->forks || is_zero_time(pi))
 		return (free(pi), 1);
 	if (init_thread(pi) == -1)
 	{
@@ -127,6 +126,8 @@ int	main(int ac, char **av)
 		return (1);
 	}
 	monitor(pi);
-	destroy_and_free(pi);
+	free(pi->philos);
+	free(pi->forks);
+	free(pi);
 	return (0);
 }

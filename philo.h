@@ -6,7 +6,7 @@
 /*   By: mecavus <mecavus@student.42kocaeli.com.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 15:20:51 by mecavus           #+#    #+#             */
-/*   Updated: 2025/07/26 17:52:16 by mecavus          ###   ########.fr       */
+/*   Updated: 2025/07/27 14:05:17 by mecavus          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,5 +54,7 @@ void			eat_status(t_philo *p);
 unsigned long	get_ms(t_philo_info *pi);
 void			ms_sleep(t_philo *p, int time);
 int				ft_atoi(char *str);
+int				can_take_forks(t_philo *p);
+int				should_give_priority(t_philo *p, int fork_index);
 
 #endif

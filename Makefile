@@ -1,7 +1,7 @@
 CC = cc
 NAME = philo
-CFLAGS = -Wall -Wextra -Werror -pthread
-SRCS = philo.c monitor.c philo_loop.c utils.c
+CFLAGS = -Wall -Wextra -Werror -pthread -fsanitize=thread
+SRCS = philo.c monitor.c philo_loop.c utils.c priority.c
 HEADERS = philo.h
 
 OBJS = $(SRCS:.c=.o)

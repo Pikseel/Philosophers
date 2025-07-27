@@ -6,7 +6,7 @@
 /*   By: mecavus <mecavus@student.42kocaeli.com.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 19:25:32 by mecavus           #+#    #+#             */
-/*   Updated: 2025/07/26 18:53:33 by mecavus          ###   ########.fr       */
+/*   Updated: 2025/07/27 15:06:17 by mecavus          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,15 +14,22 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-void	destroy_and_free(t_philo_info *pi)
+void	destroy_mutexes(t_philo_info *pi, int thread_count)
 {
-	destroy_mutexes(pi, pi->philo_size);
-	free(pi->philos);
-	free(pi->forks);
-	free(pi);
+	int	i;
+
+	i = -1;
+	while (++i < thread_count)
+		pthread_join(pi->philos[i].thread, NULL);
+	pthread_mutex_destroy(&pi->dead_mutex);
+	pthread_mutex_destroy(&pi->check_mutex);
+	pthread_mutex_destroy(&pi->stop_mutex);
+	i = -1;
+	while (++i < pi->philo_size)
+		pthread_mutex_destroy(&pi->forks[i]);
 }
 
-void	take_forks(t_philo *p)
+static void	take_forks(t_philo *p)
 {
 	int	left_fork;
 	int	right_fork;
@@ -45,7 +52,7 @@ void	take_forks(t_philo *p)
 	}
 }
 
-void	eat_and_release(t_philo *p)
+static void	eat_and_release(t_philo *p)
 {
 	int	left_fork;
 	int	right_fork;
@@ -74,6 +81,28 @@ void	eat_and_release(t_philo *p)
 	print_status(p, "is thinking");
 }
 
+static int	should_continue_eating(t_philo *p)
+{
+	pthread_mutex_lock(&p->pi->stop_mutex);
+	if (p->pi->stop)
+	{
+		pthread_mutex_unlock(&p->pi->stop_mutex);
+		return (0);
+	}
+	pthread_mutex_unlock(&p->pi->stop_mutex);
+	if (p->pi->eat_limit != -1)
+	{
+		pthread_mutex_lock(&p->pi->check_mutex);
+		if (p->meals_eaten >= p->pi->eat_limit)
+		{
+			pthread_mutex_unlock(&p->pi->check_mutex);
+			return (0);
+		}
+		pthread_mutex_unlock(&p->pi->check_mutex);
+	}
+	return (1);
+}
+
 void	*philo_loop(void *philo)
 {
 	t_philo	*p;
@@ -87,27 +116,10 @@ void	*philo_loop(void *philo)
 		pthread_mutex_unlock(&p->pi->forks[p->index]);
 		return (NULL);
 	}
-	if (p->index % 2 == 0)
-		usleep(200);
-	while (1)
+	while (should_continue_eating(p))
 	{
-		pthread_mutex_lock(&p->pi->stop_mutex);
-		if (p->pi->stop)
-		{
-			pthread_mutex_unlock(&p->pi->stop_mutex);
-			break ;
-		}
-		pthread_mutex_unlock(&p->pi->stop_mutex);
-		if (p->pi->eat_limit != -1)
-		{
-			pthread_mutex_lock(&p->pi->check_mutex);
-			if (p->meals_eaten >= p->pi->eat_limit)
-			{
-				pthread_mutex_unlock(&p->pi->check_mutex);
-				break ;
-			}
-			pthread_mutex_unlock(&p->pi->check_mutex);
-		}
+		if (!can_take_forks(p))
+			continue ;
 		take_forks(p);
 		eat_and_release(p);
 	}
