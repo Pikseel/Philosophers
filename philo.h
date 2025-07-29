@@ -6,55 +6,60 @@
 /*   By: mecavus <mecavus@student.42kocaeli.com.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 15:20:51 by mecavus           #+#    #+#             */
-/*   Updated: 2025/07/27 14:05:17 by mecavus          ###   ########.fr       */
+/*   Updated: 2025/07/29 18:10:39 by mecavus          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef PHILO_H
 # define PHILO_H
 
-# include <pthread.h>
-# include <sys/time.h>
+# define SET 0
+# define GET 1
+# define DESTROY 0
+# define JOIN 1
 
-struct	s_philo_info;
+# include <pthread.h>
 
 typedef struct s_philo
 {
-	struct s_philo_info	*pi;
-	pthread_t			thread;
-	int					index;
-	unsigned long		last_eat_time;
-	int					meals_eaten;
+	int				id;
+	int				eat_count;
+	struct s_table	*table;
+	pthread_t		thread;
+	size_t			tv_last_eat;
+	pthread_mutex_t	m_eat;
+	pthread_mutex_t	*right_fork;
+	pthread_mutex_t	*left_fork;
 }	t_philo;
 
-typedef struct s_philo_info
+typedef struct s_table
 {
+	int				status;
+	int				is_dead;
 	int				philo_size;
-	unsigned long	die_time;
-	int				eat_time;
-	int				sleep_time;
 	int				eat_limit;
-	unsigned long	start_ms;
-	struct timeval	tv;
+	int				die_time;
+	int				sleep_time;
+	int				eat_time;
+	size_t			tv_start;
+	pthread_mutex_t	m_check;
+	pthread_mutex_t	m_dead;
+	pthread_mutex_t	m_print;
+	pthread_mutex_t	*m_forks;
 	t_philo			*philos;
-	pthread_mutex_t	*forks;
-	pthread_mutex_t	dead_mutex;
-	pthread_mutex_t	check_mutex;
-	int				stop;
-	pthread_mutex_t	stop_mutex;
-}	t_philo_info;
+}	t_table;
 
-void			destroy_mutexes(t_philo_info *pi, int thread_count);
-int				arg_check(char **av);
-void			monitor(t_philo_info *pi);
-void			destroy_and_free(t_philo_info *pi);
-void			*philo_loop(void *philo);
-void			print_status(t_philo *p, char *str);
-void			eat_status(t_philo *p);
-unsigned long	get_ms(t_philo_info *pi);
-void			ms_sleep(t_philo *p, int time);
-int				ft_atoi(char *str);
-int				can_take_forks(t_philo *p);
-int				should_give_priority(t_philo *p, int fork_index);
+int		create_threads(t_table *table);
+
+int		table_status(t_table *table, int status, int flag);
+void	*monitor(void *arg);
+
+void	*philo_loop(void *arg);
+
+int		can_eat(t_philo *p);
+void	print_message(char *str, t_philo *philo, int id);
+int		ft_atoi(char *str);
+int		ft_usleep(size_t milliseconds);
+size_t	get_current_time(void);
 
 #endif

@@ -6,128 +6,96 @@
 /*   By: mecavus <mecavus@student.42kocaeli.com.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/20 15:20:46 by mecavus           #+#    #+#             */
-/*   Updated: 2025/07/27 15:20:14 by mecavus          ###   ########.fr       */
+/*   Updated: 2025/07/29 17:21:39 by mecavus          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philo.h"
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
 
-static void	init_arg(t_philo_info *pi, char **av)
+static void	philo_think(t_philo *philo)
 {
-	pi->philo_size = ft_atoi(av[1]);
-	pi->die_time = ft_atoi(av[2]);
-	pi->eat_time = ft_atoi(av[3]);
-	pi->sleep_time = ft_atoi(av[4]);
-	if (av[5])
-		pi->eat_limit = ft_atoi(av[5]);
+	int	i;
+
+	if (!philo || !philo->table)
+		return ;
+	print_message("is thinking", philo, philo->id);
+	i = (philo->table->die_time - (philo->table->sleep_time
+				+ philo->table->eat_time)) / 2;
+	if (i < 0)
+		i = 0;
+	ft_usleep(i);
+}
+
+static void	philo_sleep(t_philo *philo)
+{
+	if (!philo || !philo->table)
+		return ;
+	print_message("is sleeping", philo, philo->id);
+	ft_usleep(philo->table->sleep_time);
+}
+
+static void	take_forks(t_philo *philo)
+{
+	if (!philo || !philo->left_fork || !philo->right_fork)
+		return ;
+	if (philo->id % 2)
+	{
+		pthread_mutex_lock(philo->left_fork);
+		print_message("has taken a fork", philo, philo->id);
+		pthread_mutex_lock(philo->right_fork);
+		print_message("has taken a fork", philo, philo->id);
+	}
 	else
-		pi->eat_limit = -1;
-	pi->philos = malloc(sizeof(t_philo) * pi->philo_size);
-	if (!pi->philos)
 	{
-		pi->forks = NULL;
+		pthread_mutex_lock(philo->right_fork);
+		print_message("has taken a fork", philo, philo->id);
+		pthread_mutex_lock(philo->left_fork);
+		print_message("has taken a fork", philo, philo->id);
+	}
+}
+
+static void	philo_eat(t_philo *philo)
+{
+	if (!philo || !philo->table)
+		return ;
+	if (philo->table->philo_size == 1)
+	{
+		pthread_mutex_lock(philo->left_fork);
+		print_message("has taken a fork", philo, philo->id);
+		ft_usleep(philo->table->die_time);
+		pthread_mutex_unlock(philo->left_fork);
 		return ;
 	}
-	pi->forks = malloc(sizeof(pthread_mutex_t) * pi->philo_size);
-	if (!pi->forks)
-	{
-		free(pi->philos);
-		pi->philos = NULL;
-		return ;
-	}
-	gettimeofday(&pi->tv, NULL);
-	pi->start_ms = (pi->tv.tv_usec / 1000 + pi->tv.tv_sec * 1000);
+	take_forks(philo);
+	print_message("is eating", philo, philo->id);
+	ft_usleep(philo->table->eat_time);
+	pthread_mutex_lock(&philo->m_eat);
+	philo->tv_last_eat = get_current_time();
+	philo->eat_count++;
+	pthread_mutex_unlock(&philo->m_eat);
+	pthread_mutex_unlock(philo->left_fork);
+	pthread_mutex_unlock(philo->right_fork);
 }
 
-static int	init_mutexes(t_philo_info *pi)
+void	*philo_loop(void *arg)
 {
-	int	i;
+	t_philo	*philo;
 
-	if (pthread_mutex_init(&pi->dead_mutex, NULL) != 0)
-		return (-1);
-	if (pthread_mutex_init(&pi->check_mutex, NULL) != 0)
-		return (pthread_mutex_destroy(&pi->dead_mutex), -1);
-	if (pthread_mutex_init(&pi->stop_mutex, NULL) != 0)
-		return (pthread_mutex_destroy(&pi->dead_mutex),
-			pthread_mutex_destroy(&pi->check_mutex), -1);
-	i = -1;
-	while (++i < pi->philo_size)
+	philo = (t_philo *)arg;
+	if (!philo || !philo->table)
+		return (NULL);
+	while (table_status(philo->table, 0, GET) == 0)
+		;
+	pthread_mutex_lock(&philo->m_eat);
+	philo->tv_last_eat = get_current_time();
+	pthread_mutex_unlock(&philo->m_eat);
+	if (philo->id % 2)
+		ft_usleep(1);
+	while (can_eat(philo))
 	{
-		if (pthread_mutex_init(&pi->forks[i], NULL) != 0)
-		{
-			while (--i >= 0)
-				pthread_mutex_destroy(&pi->forks[i]);
-			pthread_mutex_destroy(&pi->stop_mutex);
-			pthread_mutex_destroy(&pi->check_mutex);
-			return (pthread_mutex_destroy(&pi->dead_mutex), -1);
-		}
+		philo_eat(philo);
+		philo_sleep(philo);
+		philo_think(philo);
 	}
-	return (0);
-}
-
-static int	init_thread(t_philo_info *pi)
-{
-	int	i;
-
-	if (init_mutexes(pi) == -1)
-		return (-1);
-	pi->stop = 0;
-	i = -1;
-	while (++i < pi->philo_size)
-	{
-		pi->philos[i].pi = pi;
-		pi->philos[i].last_eat_time = get_ms(pi);
-		pi->philos[i].index = i;
-		pi->philos[i].meals_eaten = 0;
-	}
-	i = -1;
-	while (++i < pi->philo_size)
-	{
-		if (pthread_create(&pi->philos[i].thread, NULL, philo_loop,
-				&pi->philos[i]) != 0)
-			return (destroy_mutexes(pi, i), -1);
-	}
-	return (0);
-}
-
-static int	is_zero_time(t_philo_info *pi)
-{
-	if (pi->die_time == 0 || pi->eat_time == 0 || pi->sleep_time == 0)
-	{
-		printf("Error: Time values cant be zero.\n");
-		return (1);
-	}
-	return (0);
-}
-
-int	main(int ac, char **av)
-{
-	t_philo_info	*pi;
-
-	if ((ac != 5 && ac != 6) || arg_check(av + 1) == -1)
-	{
-		printf("Error: Invalid argument.\n");
-		return (1);
-	}
-	pi = malloc(sizeof(t_philo_info));
-	if (!pi)
-		return (1);
-	init_arg(pi, av);
-	if (!pi->philos || !pi->forks || is_zero_time(pi))
-		return (free(pi), 1);
-	if (init_thread(pi) == -1)
-	{
-		free(pi->philos);
-		free(pi->forks);
-		free(pi);
-		return (1);
-	}
-	monitor(pi);
-	free(pi->philos);
-	free(pi->forks);
-	free(pi);
-	return (0);
+	return (NULL);
 }

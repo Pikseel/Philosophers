@@ -1,25 +1,31 @@
-CC = cc
-NAME = philo
-CFLAGS = -Wall -Wextra -Werror -pthread -fsanitize=thread
-SRCS = philo.c monitor.c philo_loop.c utils.c priority.c
-HEADERS = philo.h
+CC		=	cc
+NAME	=	philo
+CFLAGS	=	-Wall -Wextra -Werror
 
-OBJS = $(SRCS:.c=.o)
+SRCS	=	create.c \
+			main.c \
+			monitor.c \
+			philo.c \
+			utils.c
 
-all: $(NAME)
+HEADER	=	philo.h
 
-$(NAME): $(OBJS)
+OBJS	=	$(SRCS:.c=.o)
+
+all:	$(NAME)
+
+$(NAME):	$(OBJS)
 	$(CC) $(CFLAGS) $(OBJS) -o $(NAME)
 
-%.o: %.c $(HEADERS)
+%.o:	%.c $(HEADER)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
 	rm -f $(OBJS)
 
-fclean: clean
+fclean:	clean
 	rm -f $(NAME)
 
-re: fclean all
+re:	fclean all
 
-.PHONY: all clean fclean re
+.PHONY:	all clean fclean re

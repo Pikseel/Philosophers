@@ -396,7 +396,7 @@ test_meal_counting() {
     fi
     
     print_test "Large meal count (stress test)"
-    output=$(timeout 30s ./philo 2 2000 100 100 50 2>/dev/null)
+    output=$(timeout 30s ./philo 2 1000 100 100 50 2>/dev/null)
     deaths=$(count_deaths "$output")
     meals=$(count_meals "$output")
     
