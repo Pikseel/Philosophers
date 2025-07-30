@@ -62,7 +62,8 @@ static void	philo_eat(t_philo *philo)
 	{
 		pthread_mutex_lock(philo->left_fork);
 		print_message("has taken a fork", philo, philo->id);
-		ft_usleep(philo->table->die_time);
+		while (can_eat(philo))
+			ft_usleep(1);
 		pthread_mutex_unlock(philo->left_fork);
 		return ;
 	}

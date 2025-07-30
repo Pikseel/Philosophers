@@ -38,7 +38,7 @@ void	print_message(char *str, t_philo *philo, int id)
 		return ;
 	pthread_mutex_lock(&philo->table->m_print);
 	time = get_current_time() - philo->table->tv_start;
-	if (can_eat(philo))
+	if (can_eat(philo) || (str[0] == 'd' && str[1] == 'i' && str[2] == 'e' && str[3] == 'd'))
 		printf("%zu %d %s\n", time, id + 1, str);
 	pthread_mutex_unlock(&philo->table->m_print);
 }
